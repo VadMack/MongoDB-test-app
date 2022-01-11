@@ -5,9 +5,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -19,7 +16,6 @@ public class Project {
     @Transient
     public static final String SEQUENCE_NAME = "projects_sequence";
 
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     private Long id;
 

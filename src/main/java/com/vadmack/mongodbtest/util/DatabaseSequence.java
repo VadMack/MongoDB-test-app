@@ -15,5 +15,4 @@ public class DatabaseSequence {
     private String id;
 
     private long seq;
-
 }
