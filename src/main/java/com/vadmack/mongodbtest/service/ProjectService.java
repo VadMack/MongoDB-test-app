@@ -4,6 +4,7 @@ import com.vadmack.mongodbtest.dto.ProjectDto;
 import com.vadmack.mongodbtest.dto.ProjectNoIdDto;
 import com.vadmack.mongodbtest.entity.Project;
 import com.vadmack.mongodbtest.exception.NotFoundException;
+import com.vadmack.mongodbtest.exception.ValidationException;
 import com.vadmack.mongodbtest.repository.ProjectRepository;
 import com.vadmack.mongodbtest.util.SequenceGeneratorService;
 import org.modelmapper.ModelMapper;
@@ -36,12 +37,14 @@ public class ProjectService {
     }
 
     public void create(ProjectNoIdDto projectNoIdDto) {
+        validateDto(projectNoIdDto);
         Project project = modelMapper.map(projectNoIdDto, Project.class);
         project.setId(sequenceGeneratorService.generateSequence(Project.SEQUENCE_NAME));
         repository.save(project);
     }
 
     public void update(Long id, ProjectNoIdDto projectNoIdDto) {
+        validateDto(projectNoIdDto);
         repository.findById(id)
                 .orElseThrow(() -> new NotFoundException(String.format("Project with id=%d not found", id)));
         Project updatedProject = modelMapper.map(projectNoIdDto, Project.class);
@@ -54,5 +57,12 @@ public class ProjectService {
                 .orElseThrow(() -> new NotFoundException(String.format("Project with id=%d not found", id)));
         Optional<Project> optionalProject = repository.findById(id);
         optionalProject.ifPresent(project -> repository.delete(project));
+    }
+
+    private void validateDto(ProjectNoIdDto dto) {
+        if (dto.getName() == null ||
+        dto.getName().isEmpty()){
+            throw new ValidationException("The property 'name' is not defined");
+        }
     }
 }
