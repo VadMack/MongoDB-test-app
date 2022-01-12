@@ -1,6 +1,7 @@
 package com.vadmack.mongodbtest.controller;
 
 import com.vadmack.mongodbtest.dto.ProjectDto;
+import com.vadmack.mongodbtest.dto.ProjectNoIdDto;
 import com.vadmack.mongodbtest.entity.Project;
 import com.vadmack.mongodbtest.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,25 +19,25 @@ public class ProjectController {
     private ProjectService service;
 
     @GetMapping
-    public ResponseEntity<List<Project>> findAll() {
+    public ResponseEntity<List<ProjectDto>> findAll() {
         return ResponseEntity.ok(service.findAll());
     }
 
     @GetMapping(value = "/{id}")
-    public ResponseEntity<Project> findById(@PathVariable(value = "id") Long id) {
+    public ResponseEntity<ProjectDto> findById(@PathVariable(value = "id") Long id) {
         return ResponseEntity.ok(service.findById(id));
     }
 
     @PostMapping
-    public ResponseEntity create(@RequestBody ProjectDto projectDto) {
-        service.create(projectDto);
+    public ResponseEntity create(@RequestBody ProjectNoIdDto projectNoIdDto) {
+        service.create(projectNoIdDto);
         return new ResponseEntity(HttpStatus.CREATED);
     }
 
     @PutMapping(value = "/{id}")
     public ResponseEntity update(@PathVariable(value = "id") Long id,
-                                 @RequestBody ProjectDto projectDto) {
-        service.update(id, projectDto);
+                                 @RequestBody ProjectNoIdDto projectNoIdDto) {
+        service.update(id, projectNoIdDto);
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 

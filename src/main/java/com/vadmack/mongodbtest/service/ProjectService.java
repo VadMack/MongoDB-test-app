@@ -1,6 +1,7 @@
 package com.vadmack.mongodbtest.service;
 
 import com.vadmack.mongodbtest.dto.ProjectDto;
+import com.vadmack.mongodbtest.dto.ProjectNoIdDto;
 import com.vadmack.mongodbtest.entity.Project;
 import com.vadmack.mongodbtest.repository.ProjectRepository;
 import com.vadmack.mongodbtest.util.SequenceGeneratorService;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ProjectService {
@@ -22,22 +24,24 @@ public class ProjectService {
 
     private final ModelMapper modelMapper = new ModelMapper();
 
-    public List<Project> findAll() {
-        return repository.findAll();
+    public List<ProjectDto> findAll() {
+        return repository.findAll().stream().map(project -> modelMapper.map(project, ProjectDto.class))
+                .collect(Collectors.toList());
     }
 
-    public Project findById(Long id) {
-        return repository.findById(id).orElse(new Project());
+    public ProjectDto findById(Long id) {
+        return repository.findById(id).map(project -> modelMapper.map(project, ProjectDto.class))
+                .orElse(new ProjectDto());
     }
 
-    public void create(ProjectDto projectDto) {
-        Project project = modelMapper.map(projectDto, Project.class);
+    public void create(ProjectNoIdDto projectNoIdDto) {
+        Project project = modelMapper.map(projectNoIdDto, Project.class);
         project.setId(sequenceGeneratorService.generateSequence(Project.SEQUENCE_NAME));
         repository.save(project);
     }
 
-    public void update(Long id, ProjectDto projectDto) {
-        Project updatedProject = modelMapper.map(projectDto, Project.class);
+    public void update(Long id, ProjectNoIdDto projectNoIdDto) {
+        Project updatedProject = modelMapper.map(projectNoIdDto, Project.class);
         updatedProject.setId(id);
         repository.save(updatedProject);
     }
