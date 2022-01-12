@@ -1,4 +1,4 @@
-package com.vadmack.mongodbtest.entities;
+package com.vadmack.mongodbtest.entity;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
