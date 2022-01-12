@@ -3,6 +3,7 @@ package com.vadmack.mongodbtest.service;
 import com.vadmack.mongodbtest.dto.ProjectDto;
 import com.vadmack.mongodbtest.dto.ProjectNoIdDto;
 import com.vadmack.mongodbtest.entity.Project;
+import com.vadmack.mongodbtest.exception.NotFoundException;
 import com.vadmack.mongodbtest.repository.ProjectRepository;
 import com.vadmack.mongodbtest.util.SequenceGeneratorService;
 import org.modelmapper.ModelMapper;
@@ -31,7 +32,7 @@ public class ProjectService {
 
     public ProjectDto findById(Long id) {
         return repository.findById(id).map(project -> modelMapper.map(project, ProjectDto.class))
-                .orElse(new ProjectDto());
+                .orElseThrow(() -> new NotFoundException(String.format("Project with id=%d not found", id)));
     }
 
     public void create(ProjectNoIdDto projectNoIdDto) {
@@ -41,12 +42,16 @@ public class ProjectService {
     }
 
     public void update(Long id, ProjectNoIdDto projectNoIdDto) {
+        repository.findById(id)
+                .orElseThrow(() -> new NotFoundException(String.format("Project with id=%d not found", id)));
         Project updatedProject = modelMapper.map(projectNoIdDto, Project.class);
         updatedProject.setId(id);
         repository.save(updatedProject);
     }
 
     public void delete(Long id) {
+        repository.findById(id)
+                .orElseThrow(() -> new NotFoundException(String.format("Project with id=%d not found", id)));
         Optional<Project> optionalProject = repository.findById(id);
         optionalProject.ifPresent(project -> repository.delete(project));
     }
