@@ -25,29 +25,37 @@ public class ProjectService {
     private final ModelMapper modelMapper = new ModelMapper();
 
     public List<ProjectDto> findAll() {
-        return repository.findAll().stream().map(project -> modelMapper.map(project, ProjectDto.class))
+        return repository.findAll().stream().map(this::entityToDto)
                 .collect(Collectors.toList());
     }
 
     public ProjectDto findById(Long id) {
-        return repository.findById(id).map(project -> modelMapper.map(project, ProjectDto.class))
+        return repository.findById(id).map(this::entityToDto)
                 .orElse(new ProjectDto());
     }
 
     public void create(ProjectNoIdDto projectNoIdDto) {
-        Project project = modelMapper.map(projectNoIdDto, Project.class);
+        Project project = dtoToProject(projectNoIdDto);
         project.setId(sequenceGeneratorService.generateSequence(Project.SEQUENCE_NAME));
         repository.save(project);
     }
 
     public void update(Long id, ProjectNoIdDto projectNoIdDto) {
-        Project updatedProject = modelMapper.map(projectNoIdDto, Project.class);
-        updatedProject.setId(id);
-        repository.save(updatedProject);
+        Project project = dtoToProject(projectNoIdDto);
+        project.setId(id);
+        repository.save(project);
     }
 
     public void delete(Long id) {
         Optional<Project> optionalProject = repository.findById(id);
         optionalProject.ifPresent(project -> repository.delete(project));
+    }
+
+    private ProjectDto entityToDto(Project project) {
+        return modelMapper.map(project, ProjectDto.class);
+    }
+
+    private Project dtoToProject(ProjectNoIdDto dto) {
+        return modelMapper.map(dto, Project.class);
     }
 }
