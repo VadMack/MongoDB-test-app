@@ -1,6 +1,6 @@
-package com.vadmack.mongodbtest.repositories;
+package com.vadmack.mongodbtest.repository;
 
-import com.vadmack.mongodbtest.entities.Project;
+import com.vadmack.mongodbtest.entity.Project;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
