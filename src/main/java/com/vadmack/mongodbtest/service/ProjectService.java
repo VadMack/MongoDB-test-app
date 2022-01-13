@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,36 +26,45 @@ public class ProjectService {
     private final ModelMapper modelMapper = new ModelMapper();
 
     public List<ProjectDto> findAll() {
-        return repository.findAll().stream().map(project -> modelMapper.map(project, ProjectDto.class))
+        return repository.findAll().stream().map(this::entityToDto)
                 .collect(Collectors.toList());
     }
 
     public ProjectDto findById(Long id) {
-        return repository.findById(id).map(project -> modelMapper.map(project, ProjectDto.class))
-                .orElseThrow(() -> new NotFoundException(String.format("Project with id=%d not found", id)));
+        return entityToDto(getById(id));
     }
 
     public void create(ProjectNoIdDto projectNoIdDto) {
         validateDto(projectNoIdDto);
-        Project project = modelMapper.map(projectNoIdDto, Project.class);
+        Project project = dtoToEntity(projectNoIdDto);
         project.setId(sequenceGeneratorService.generateSequence(Project.SEQUENCE_NAME));
         repository.save(project);
     }
 
     public void update(Long id, ProjectNoIdDto projectNoIdDto) {
         validateDto(projectNoIdDto);
-        repository.findById(id)
-                .orElseThrow(() -> new NotFoundException(String.format("Project with id=%d not found", id)));
-        Project updatedProject = modelMapper.map(projectNoIdDto, Project.class);
-        updatedProject.setId(id);
-        repository.save(updatedProject);
+        getById(id);
+        Project project = dtoToEntity(projectNoIdDto);
+        project.setId(id);
+        repository.save(project);
     }
 
     public void delete(Long id) {
-        repository.findById(id)
+        Project project = getById(id);
+        repository.delete(project);
+    }
+
+    private ProjectDto entityToDto(Project project) {
+        return modelMapper.map(project, ProjectDto.class);
+    }
+
+    private Project dtoToEntity(ProjectNoIdDto dto) {
+        return modelMapper.map(dto, Project.class);
+    }
+
+    private Project getById(Long id) {
+        return repository.findById(id)
                 .orElseThrow(() -> new NotFoundException(String.format("Project with id=%d not found", id)));
-        Optional<Project> optionalProject = repository.findById(id);
-        optionalProject.ifPresent(project -> repository.delete(project));
     }
 
     private void validateDto(ProjectNoIdDto dto) {
