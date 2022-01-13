@@ -4,7 +4,6 @@ import com.vadmack.mongodbtest.dto.ProjectDto;
 import com.vadmack.mongodbtest.dto.ProjectNoIdDto;
 import com.vadmack.mongodbtest.entity.Project;
 import com.vadmack.mongodbtest.exception.NotFoundException;
-import com.vadmack.mongodbtest.exception.ValidationException;
 import com.vadmack.mongodbtest.repository.ProjectRepository;
 import com.vadmack.mongodbtest.util.SequenceGeneratorService;
 import org.modelmapper.ModelMapper;
@@ -35,14 +34,12 @@ public class ProjectService {
     }
 
     public void create(ProjectNoIdDto projectNoIdDto) {
-        validateDto(projectNoIdDto);
         Project project = dtoToEntity(projectNoIdDto);
         project.setId(sequenceGeneratorService.generateSequence(Project.SEQUENCE_NAME));
         repository.save(project);
     }
 
     public void update(Long id, ProjectNoIdDto projectNoIdDto) {
-        validateDto(projectNoIdDto);
         getById(id);
         Project project = dtoToEntity(projectNoIdDto);
         project.setId(id);
@@ -65,12 +62,5 @@ public class ProjectService {
     private Project getById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new NotFoundException(String.format("Project with id=%d not found", id)));
-    }
-
-    private void validateDto(ProjectNoIdDto dto) {
-        if (dto.getName() == null ||
-        dto.getName().isEmpty()){
-            throw new ValidationException("The property 'name' is not defined");
-        }
     }
 }
