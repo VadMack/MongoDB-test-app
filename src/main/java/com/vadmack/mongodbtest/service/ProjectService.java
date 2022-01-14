@@ -6,21 +6,19 @@ import com.vadmack.mongodbtest.entity.Project;
 import com.vadmack.mongodbtest.exception.NotFoundException;
 import com.vadmack.mongodbtest.repository.ProjectRepository;
 import com.vadmack.mongodbtest.util.SequenceGeneratorService;
+import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ProjectService {
 
-    @Autowired
-    ProjectRepository repository;
-
-    @Autowired
-    private SequenceGeneratorService sequenceGeneratorService;
+    private final ProjectRepository repository;
+    private final SequenceGeneratorService sequenceGeneratorService;
 
     private final ModelMapper modelMapper = new ModelMapper();
 
