@@ -31,6 +31,11 @@ public class ProjectService {
         return entityToDto(getById(id));
     }
 
+    public List<ProjectDto> findAllByNamePart(String name) {
+        return repository.findAllByNameLikeIgnoreCase(String.format("*%s*", name)).stream().map(this::entityToDto)
+                .collect(Collectors.toList());
+    }
+
     public void create(ProjectNoIdDto projectNoIdDto) {
         Project project = dtoToEntity(projectNoIdDto);
         project.setId(sequenceGeneratorService.generateSequence(Project.SEQUENCE_NAME));
