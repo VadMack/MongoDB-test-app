@@ -19,8 +19,9 @@ public class ProjectController {
     private ProjectService service;
 
     @GetMapping
-    public ResponseEntity<List<ProjectDto>> findAll() {
-        return ResponseEntity.ok(service.findAll());
+    public ResponseEntity<List<ProjectDto>> findAll(@RequestParam("filterProjectName") String name) {
+        return (name != null && !name.isBlank()) ? ResponseEntity.ok(service.findAllByNamePart(name))
+                : ResponseEntity.ok(service.findAll());
     }
 
     @GetMapping(value = "/{id}")
