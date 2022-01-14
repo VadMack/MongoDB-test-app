@@ -5,12 +5,16 @@ import com.vadmack.mongodbtest.dto.ProjectNoIdDto;
 import com.vadmack.mongodbtest.entity.Project;
 import com.vadmack.mongodbtest.exception.NotFoundException;
 import com.vadmack.mongodbtest.repository.ProjectRepository;
+import com.vadmack.mongodbtest.util.PageableService;
 import com.vadmack.mongodbtest.util.SequenceGeneratorService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -19,21 +23,31 @@ public class ProjectService {
 
     private final ProjectRepository repository;
     private final SequenceGeneratorService sequenceGeneratorService;
+    private final PageableService pageableService;
 
     private final ModelMapper modelMapper = new ModelMapper();
 
-    public List<ProjectDto> findAll() {
-        return repository.findAll().stream().map(this::entityToDto)
-                .collect(Collectors.toList());
+    public List<ProjectDto> findList(
+            Optional<String> name,
+            Optional<Integer> pageNumber,
+            Optional<Integer> pageSize) {
+        pageableService.validateParams(pageNumber, pageSize);
+        if (pageNumber.isPresent()) {
+            return repository.findAllByNameLikeIgnoreCase(
+                    "*" + (name).orElse("") + "*",
+                    PageRequest.of(pageNumber.get(), pageSize.get()))
+                    .stream().map(this::entityToDto)
+                    .collect(Collectors.toList());
+        } else {
+            return repository.findAllByNameLikeIgnoreCase(
+                    "*" + (name).orElse("") + "*")
+                    .stream().map(this::entityToDto)
+                    .collect(Collectors.toList());
+        }
     }
 
     public ProjectDto findById(Long id) {
         return entityToDto(getById(id));
-    }
-
-    public List<ProjectDto> findAllByNamePart(String name) {
-        return repository.findAllByNameLikeIgnoreCase(String.format("*%s*", name)).stream().map(this::entityToDto)
-                .collect(Collectors.toList());
     }
 
     public void create(ProjectNoIdDto projectNoIdDto) {
