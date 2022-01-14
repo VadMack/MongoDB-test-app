@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -19,9 +20,11 @@ public class ProjectController {
     private final ProjectService service;
 
     @GetMapping
-    public ResponseEntity<List<ProjectDto>> findAll(@RequestParam("filterProjectName") String name) {
-        return (!name.isBlank()) ? ResponseEntity.ok(service.findAllByNamePart(name))
-                : ResponseEntity.ok(service.findAll());
+    public ResponseEntity<List<ProjectDto>> findList(
+            @RequestParam("filterProjectName") Optional<String> name,
+            @RequestParam Optional<Integer> pageNumber,
+            @RequestParam Optional<Integer> pageSize) {
+        return ResponseEntity.ok(service.findList(name, pageNumber, pageSize));
     }
 
     @GetMapping(value = "/{id}")
@@ -37,7 +40,7 @@ public class ProjectController {
 
     @PutMapping(value = "/{id}")
     public ResponseEntity<?> update(@PathVariable(value = "id") Long id,
-                                 @Valid @RequestBody ProjectNoIdDto projectNoIdDto) {
+                                    @Valid @RequestBody ProjectNoIdDto projectNoIdDto) {
         service.update(id, projectNoIdDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
