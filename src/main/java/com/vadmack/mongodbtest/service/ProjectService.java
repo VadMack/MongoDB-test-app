@@ -7,10 +7,12 @@ import com.vadmack.mongodbtest.exception.NotFoundException;
 import com.vadmack.mongodbtest.repository.ProjectRepository;
 import com.vadmack.mongodbtest.util.PageableService;
 import com.vadmack.mongodbtest.util.SequenceGeneratorService;
+import com.vadmack.mongodbtest.util.SortService;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,24 +25,27 @@ public class ProjectService {
     private final ProjectRepository repository;
     private final SequenceGeneratorService sequenceGeneratorService;
     private final PageableService pageableService;
+    private final SortService sortService;
 
     private final ModelMapper modelMapper = new ModelMapper();
 
     public List<ProjectDto> findList(
             @Nullable String namePart,
             @Nullable Integer pageNumber,
-            @Nullable Integer pageSize) {
-        String regex;
-        if (namePart == null) {
-            regex = "*";
-        } else {
-            regex = "*" + namePart + "*";
-        }
+            @Nullable Integer pageSize,
+            @Nullable String[] sortBy
+    ) {
+        String regex = namePartToRegex(namePart);
         pageableService.validateParams(pageNumber, pageSize);
         if (pageNumber != null && pageSize != null) {
+            if (sortBy == null){
+                sortBy = new String[1];
+                sortBy[0] = "id:0";
+            }
+            Sort sort = sortService.createSort(sortBy);
             return repository.findAllByNameLikeIgnoreCase(
                     regex,
-                    PageRequest.of(pageNumber, pageSize))
+                    PageRequest.of(pageNumber, pageSize, sort))
                     .stream().map(this::entityToDto)
                     .collect(Collectors.toList());
         } else {
@@ -83,5 +88,13 @@ public class ProjectService {
     private Project getById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new NotFoundException(String.format("Project with id=%d not found", id)));
+    }
+
+    private String namePartToRegex(String namePart){
+        if (namePart == null) {
+            return  "*";
+        } else {
+            return  "*" + namePart + "*";
+        }
     }
 }
