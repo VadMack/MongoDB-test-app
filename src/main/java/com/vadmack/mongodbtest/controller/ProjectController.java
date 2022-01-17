@@ -22,8 +22,10 @@ public class ProjectController {
     public ResponseEntity<List<ProjectDto>> findList(
             @RequestParam(value = "filterProjectName", required = false) String name,
             @RequestParam(required = false) Integer pageNumber,
-            @RequestParam(required = false) Integer pageSize) {
-        return ResponseEntity.ok(service.findList(name, pageNumber, pageSize));
+            @RequestParam(required = false) Integer pageSize,
+            @RequestParam(value = "sort", defaultValue = "id:0") String[] sortBy
+    ) {
+        return ResponseEntity.ok(service.findList(name, pageNumber, pageSize, sortBy));
     }
 
     @GetMapping(value = "/{id}")
