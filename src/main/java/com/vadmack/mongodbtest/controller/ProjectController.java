@@ -21,7 +21,7 @@ public class ProjectController {
 
     @GetMapping
     public ResponseEntity<List<ProjectDto>> findList(
-            @RequestParam("filterProjectName") Optional<String> name,
+            @RequestParam(value = "filterProjectName", defaultValue = "") String name,
             @RequestParam Optional<Integer> pageNumber,
             @RequestParam Optional<Integer> pageSize) {
         return ResponseEntity.ok(service.findList(name, pageNumber, pageSize));
