@@ -28,19 +28,19 @@ public class ProjectService {
     private final ModelMapper modelMapper = new ModelMapper();
 
     public List<ProjectDto> findList(
-            Optional<String> name,
+            String name,
             Optional<Integer> pageNumber,
             Optional<Integer> pageSize) {
         pageableService.validateParams(pageNumber, pageSize);
         if (pageNumber.isPresent()) {
             return repository.findAllByNameLikeIgnoreCase(
-                    "*" + (name).orElse("") + "*",
+                    "*" + name + "*",
                     PageRequest.of(pageNumber.get(), pageSize.get()))
                     .stream().map(this::entityToDto)
                     .collect(Collectors.toList());
         } else {
             return repository.findAllByNameLikeIgnoreCase(
-                    "*" + (name).orElse("") + "*")
+                    "*" + name + "*")
                     .stream().map(this::entityToDto)
                     .collect(Collectors.toList());
         }
