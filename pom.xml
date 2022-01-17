@@ -58,6 +58,11 @@
             <artifactId>hibernate-validator-cdi</artifactId>
             <version>7.0.2.Final</version>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>23.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>

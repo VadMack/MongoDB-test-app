@@ -8,13 +8,12 @@ import com.vadmack.mongodbtest.repository.ProjectRepository;
 import com.vadmack.mongodbtest.util.PageableService;
 import com.vadmack.mongodbtest.util.SequenceGeneratorService;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.Nullable;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,19 +27,24 @@ public class ProjectService {
     private final ModelMapper modelMapper = new ModelMapper();
 
     public List<ProjectDto> findList(
-            String name,
-            Optional<Integer> pageNumber,
-            Optional<Integer> pageSize) {
+            @Nullable String namePart,
+            @Nullable Integer pageNumber,
+            @Nullable Integer pageSize) {
+        String regex;
+        if (namePart == null) {
+            regex = "*";
+        } else {
+            regex = "*" + namePart + "*";
+        }
         pageableService.validateParams(pageNumber, pageSize);
-        if (pageNumber.isPresent()) {
+        if (pageNumber != null && pageSize != null) {
             return repository.findAllByNameLikeIgnoreCase(
-                    "*" + name + "*",
-                    PageRequest.of(pageNumber.get(), pageSize.get()))
+                    regex,
+                    PageRequest.of(pageNumber, pageSize))
                     .stream().map(this::entityToDto)
                     .collect(Collectors.toList());
         } else {
-            return repository.findAllByNameLikeIgnoreCase(
-                    "*" + name + "*")
+            return repository.findAllByNameLikeIgnoreCase(regex)
                     .stream().map(this::entityToDto)
                     .collect(Collectors.toList());
         }

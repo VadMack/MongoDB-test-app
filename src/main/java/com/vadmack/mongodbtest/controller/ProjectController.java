@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -21,9 +20,9 @@ public class ProjectController {
 
     @GetMapping
     public ResponseEntity<List<ProjectDto>> findList(
-            @RequestParam(value = "filterProjectName", defaultValue = "") String name,
-            @RequestParam Optional<Integer> pageNumber,
-            @RequestParam Optional<Integer> pageSize) {
+            @RequestParam(value = "filterProjectName", required = false) String name,
+            @RequestParam(required = false) Integer pageNumber,
+            @RequestParam(required = false) Integer pageSize) {
         return ResponseEntity.ok(service.findList(name, pageNumber, pageSize));
     }
 
