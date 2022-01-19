@@ -35,21 +35,23 @@ public class ProjectService {
             @Nullable Integer pageSize,
             @Nullable String[] sortBy
     ) {
-        String regex = namePartToRegex(namePart);
+        if (namePart == null) {
+            namePart = "";
+        }
         pageableService.validateParams(pageNumber, pageSize);
+        Sort sort = sortService.createSort(sortBy);
         if (pageNumber != null && pageSize != null) {
-            if (sortBy == null){
+            if (sortBy == null) {
                 sortBy = new String[1];
                 sortBy[0] = "id:0";
             }
-            Sort sort = sortService.createSort(sortBy);
             return repository.findAllByNameLikeIgnoreCase(
-                    regex,
+                    namePart,
                     PageRequest.of(pageNumber, pageSize, sort))
                     .stream().map(this::entityToDto)
                     .collect(Collectors.toList());
         } else {
-            return repository.findAllByNameLikeIgnoreCase(regex)
+            return repository.findAllByNameLikeIgnoreCase(namePart, sort)
                     .stream().map(this::entityToDto)
                     .collect(Collectors.toList());
         }
@@ -88,13 +90,5 @@ public class ProjectService {
     private Project getById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new NotFoundException(String.format("Project with id=%d not found", id)));
-    }
-
-    private String namePartToRegex(String namePart){
-        if (namePart == null) {
-            return  "*";
-        } else {
-            return  "*" + namePart + "*";
-        }
     }
 }
