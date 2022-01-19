@@ -22,6 +22,8 @@ public class SortService {
                     if (matcher.find()) {
                         orderList.add(new Sort.Order(convertDirection(matcher.group("value")),
                                 matcher.group("field")));
+                    } else {
+                        throw new ValidationException("Provided 'sort' parameter is invalid");
                     }
                 }
         );
