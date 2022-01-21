@@ -1,5 +1,6 @@
 package com.vadmack.mongodbtest.log;
 
+import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -14,9 +15,10 @@ import javax.servlet.http.HttpServletRequest;
 
 @Component
 @Aspect
+@RequiredArgsConstructor
 public class RequestLogger {
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private final Logger log;
 
     @Around("@annotation(org.springframework.web.bind.annotation.GetMapping) || " +
             "@annotation(org.springframework.web.bind.annotation.PostMapping) || " +
