@@ -20,4 +20,17 @@ public class Project {
     private Long id;
 
     private String name;
+
+    private Long ownerId;
+
+    public void setOwnerId(Long ownerId) {
+        validateOwnerId();
+        this.ownerId = ownerId;
+    }
+
+    private void validateOwnerId() {
+        if (this.ownerId != null) {
+            throw new RuntimeException("Field 'ownerId' cannot be changed");
+        }
+    }
 }
