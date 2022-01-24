@@ -30,24 +30,18 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<UserDto> login(@RequestBody @Valid AuthRequest request) {
-        try {
-            Authentication authenticate = authenticationManager
-                    .authenticate(
-                            new UsernamePasswordAuthenticationToken(
-                                    request.getUsername(), request.getPassword()
-                            )
-                    );
-
-            User user = (User) authenticate.getPrincipal();
-
-            return ResponseEntity.ok()
-                    .header(
-                            HttpHeaders.AUTHORIZATION,
-                            jwtTokenUtil.generateAccessToken(user)
-                    )
-                    .body(modelMapper.map(user, UserDto.class));
-        } catch (BadCredentialsException ex) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        Authentication authenticate = authenticationManager
+                .authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                request.getUsername(), request.getPassword()
+                        )
+                );
+        User user = (User) authenticate.getPrincipal();
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.AUTHORIZATION,
+                        jwtTokenUtil.generateAccessToken(user)
+                )
+                .body(modelMapper.map(user, UserDto.class));
     }
 }

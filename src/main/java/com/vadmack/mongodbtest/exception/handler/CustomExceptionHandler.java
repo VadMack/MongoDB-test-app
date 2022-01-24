@@ -4,6 +4,7 @@ import com.vadmack.mongodbtest.exception.NotFoundException;
 import com.vadmack.mongodbtest.exception.ValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,6 +24,11 @@ public class CustomExceptionHandler {
     @ExceptionHandler({ValidationException.class})
     public ResponseEntity<String> handleValidationException(ValidationException exception) {
         return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler({BadCredentialsException.class})
+    public ResponseEntity<String> handleBadCredentialsException(BadCredentialsException exception) {
+        return new ResponseEntity<>(exception.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class})

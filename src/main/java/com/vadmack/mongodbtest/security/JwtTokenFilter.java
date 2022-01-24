@@ -16,7 +16,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
+import java.util.Collections;
 import java.util.Optional;
 
 @Component
@@ -52,7 +52,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                 userDetails, null,
-                Optional.ofNullable(userDetails).map(UserDetails::getAuthorities).orElse(List.of())
+                Optional.ofNullable(userDetails).map(UserDetails::getAuthorities).orElse(Collections.emptyList())
         );
 
         authentication
