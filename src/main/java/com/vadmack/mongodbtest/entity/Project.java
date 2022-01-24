@@ -24,11 +24,11 @@ public class Project {
     private Long ownerId;
 
     public void setOwnerId(Long ownerId) {
-        validateOwnerId();
+        checkOwnerIdBeforeSet();
         this.ownerId = ownerId;
     }
 
-    private void validateOwnerId() {
+    private void checkOwnerIdBeforeSet() {
         if (this.ownerId != null) {
             throw new RuntimeException("Field 'ownerId' cannot be changed");
         }
