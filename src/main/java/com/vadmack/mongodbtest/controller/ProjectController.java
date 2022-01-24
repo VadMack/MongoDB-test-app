@@ -2,10 +2,13 @@ package com.vadmack.mongodbtest.controller;
 
 import com.vadmack.mongodbtest.dto.ProjectDto;
 import com.vadmack.mongodbtest.dto.ProjectNoIdDto;
+import com.vadmack.mongodbtest.entity.User;
 import com.vadmack.mongodbtest.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -34,20 +37,25 @@ public class ProjectController {
     }
 
     @PostMapping
-    public ResponseEntity<?> create(@Valid @RequestBody ProjectNoIdDto projectNoIdDto) {
-        service.create(projectNoIdDto);
+    public ResponseEntity<?> create(@Valid @RequestBody ProjectNoIdDto projectNoIdDto,
+                                    @AuthenticationPrincipal User user) {
+        service.create(projectNoIdDto, user.getId());
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
+    @PreAuthorize("@projectService.userHasRights(#id, #user.id)")
     @PutMapping(value = "/{id}")
     public ResponseEntity<?> update(@PathVariable(value = "id") Long id,
-                                    @Valid @RequestBody ProjectNoIdDto projectNoIdDto) {
+                                    @Valid @RequestBody ProjectNoIdDto projectNoIdDto,
+                                    @AuthenticationPrincipal User user) {
         service.update(id, projectNoIdDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @PreAuthorize("@projectService.userHasRights(#id, #user.id)")
     @DeleteMapping(value = "/{id}")
-    public ResponseEntity<?> delete(@PathVariable(value = "id") Long id) {
+    public ResponseEntity<?> delete(@PathVariable(value = "id") Long id,
+                                    @AuthenticationPrincipal User user) {
         service.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
