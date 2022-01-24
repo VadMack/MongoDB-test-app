@@ -3,6 +3,7 @@ package com.vadmack.mongodbtest.service;
 import com.vadmack.mongodbtest.dto.ProjectDto;
 import com.vadmack.mongodbtest.dto.ProjectNoIdDto;
 import com.vadmack.mongodbtest.entity.Project;
+import com.vadmack.mongodbtest.entity.User;
 import com.vadmack.mongodbtest.exception.NotFoundException;
 import com.vadmack.mongodbtest.repository.ProjectRepository;
 import com.vadmack.mongodbtest.util.PageableService;
@@ -13,6 +14,9 @@ import org.jetbrains.annotations.Nullable;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -64,18 +68,26 @@ public class ProjectService {
     public void create(ProjectNoIdDto projectNoIdDto) {
         Project project = dtoToEntity(projectNoIdDto);
         project.setId(sequenceGeneratorService.generateSequence(Project.SEQUENCE_NAME));
+        project.setOwnerId(getUserId());
         repository.save(project);
     }
 
     public void update(Long id, ProjectNoIdDto projectNoIdDto) {
-        getById(id);
+        Long ownerId = getById(id).getOwnerId();
+        if (!ownerId.equals(getUserId())) {
+            throw new AccessDeniedException("Only available to the owner of the project");
+        }
         Project project = dtoToEntity(projectNoIdDto);
         project.setId(id);
+        project.setOwnerId(ownerId);
         repository.save(project);
     }
 
     public void delete(Long id) {
         Project project = getById(id);
+        if (!project.getOwnerId().equals(getUserId())) {
+            throw new AccessDeniedException("Only available to the owner of the project");
+        }
         repository.delete(project);
     }
 
@@ -90,5 +102,11 @@ public class ProjectService {
     private Project getById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new NotFoundException(String.format("Project with id=%d not found", id)));
+    }
+
+    private Long getUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        return user.getId();
     }
 }
