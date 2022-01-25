@@ -85,10 +85,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         http.authorizeRequests()
                 .antMatchers("/api/public/**").permitAll()
-                .antMatchers(HttpMethod.GET, "/api/**").permitAll()
-                .antMatchers(HttpMethod.POST, "/api/**").hasAnyRole("USER", "ADMIN")
-                .antMatchers(HttpMethod.PUT, "/api/**").hasAnyRole("USER", "ADMIN")
-                .antMatchers(HttpMethod.DELETE, "/api/**").hasAnyRole("USER", "ADMIN");
+                .antMatchers(HttpMethod.GET, "/api/projects/**").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/projects/**").hasAnyRole("USER", "ADMIN")
+                .antMatchers(HttpMethod.PUT, "/api/projects/**").hasAnyRole("USER", "ADMIN")
+                .antMatchers(HttpMethod.DELETE, "/api/projects/**").hasAnyRole("USER", "ADMIN")
+                .antMatchers("/api/users/**").hasRole("ADMIN");
 
         // Add JWT token filter
         http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
