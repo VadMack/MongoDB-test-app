@@ -14,4 +14,9 @@ public class Role implements GrantedAuthority {
     public static final String ROLE_ADMIN = "ROLE_ADMIN";
 
     private String authority;
+
+    public static String getAvailableRolesAsString() {
+        return ROLE_USER + ", " +
+                ROLE_ADMIN;
+    }
 }

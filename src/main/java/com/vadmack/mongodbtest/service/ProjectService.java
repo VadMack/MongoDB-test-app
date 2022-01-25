@@ -81,6 +81,10 @@ public class ProjectService {
         repository.delete(project);
     }
 
+    public List<Project> findAllByOwnerId(Long ownerId) {
+        return repository.findAllByOwnerId(ownerId);
+    }
+
     private ProjectDto entityToDto(Project project) {
         return modelMapper.map(project, ProjectDto.class);
     }
