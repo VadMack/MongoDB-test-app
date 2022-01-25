@@ -94,8 +94,8 @@ public class ProjectService {
                 .orElseThrow(() -> new NotFoundException(String.format("Project with id=%d not found", id)));
     }
 
-    public boolean userHasRights(Long id, Long userId) {
-        Project project = getById(id);
+    public boolean userIsOwner(Long projectId, Long userId) {
+        Project project = getById(projectId);
         return project.getOwnerId().equals(userId);
     }
 }

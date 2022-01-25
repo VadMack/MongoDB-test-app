@@ -43,7 +43,7 @@ public class ProjectController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    @PreAuthorize("@projectService.userHasRights(#id, #user.id)")
+    @PreAuthorize("@projectService.userIsOwner(#id, #user.id)")
     @PutMapping(value = "/{id}")
     public ResponseEntity<?> update(@PathVariable(value = "id") Long id,
                                     @Valid @RequestBody ProjectNoIdDto projectNoIdDto,
@@ -52,7 +52,7 @@ public class ProjectController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @PreAuthorize("@projectService.userHasRights(#id, #user.id)")
+    @PreAuthorize("@projectService.userIsOwner(#id, #user.id)")
     @DeleteMapping(value = "/{id}")
     public ResponseEntity<?> delete(@PathVariable(value = "id") Long id,
                                     @AuthenticationPrincipal User user) {
