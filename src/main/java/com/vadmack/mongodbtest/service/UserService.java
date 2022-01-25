@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -83,6 +84,7 @@ public class UserService {
         repository.save(user);
     }
 
+    @Transactional
     public void delete(Long id) {
         User user = getById(id);
         List<Project> projects = projectService.findAllByOwnerId(id);
