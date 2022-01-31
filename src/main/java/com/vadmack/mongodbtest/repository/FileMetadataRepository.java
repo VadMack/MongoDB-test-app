@@ -11,7 +11,7 @@ import java.util.Optional;
 
 @Repository
 public interface FileMetadataRepository extends MongoRepository<FileMetadata, Long> {
-    List<FileMetadata> findAllByDirectoryRegex(String regex, Pageable pageable);
-    List<FileMetadata> findAllByDirectoryRegex(String regex, Sort sort);
-    Optional<FileMetadata> findByDirectory(String originalFilename);
+    List<FileMetadata> findAllByOriginalFilenameRegex(String regex, Pageable pageable);
+    List<FileMetadata> findAllByOriginalFilenameRegex(String regex, Sort sort);
+    Optional<FileMetadata> findByDirectoryAndOriginalFilename(String directory, String originalFilename);
 }

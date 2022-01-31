@@ -2,6 +2,7 @@ package com.vadmack.mongodbtest.service;
 
 import com.vadmack.mongodbtest.entity.FileMetadata;
 import com.vadmack.mongodbtest.exception.ServerSideException;
+import com.vadmack.mongodbtest.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Service
@@ -30,66 +32,128 @@ public class FileService {
         try {
             Files.createDirectories(Paths.get(rootDirectory));
         } catch (IOException ex) {
-            throw new ServerSideException("Could not create upload folder: " + ex.getMessage());
+            throw new ServerSideException("Could not create upload folder: " + ex.getMessage(), ex);
         }
     }
 
     public void saveFromLink(String url) {
         String[] urlParts = url.split("/");
         String filename = urlParts[urlParts.length - 1];
-        metadataService.checkAlreadyExists(filename);
+        metadataService.checkAlreadyExists("", filename);
 
-        File file = new File(String.valueOf(Paths.get(rootDirectory).resolve(filename)));
-        try (InputStream in = new URL(url).openStream()) {
-            Files.copy(in, file.toPath());
-            metadataService.create(file);
-        } catch (IOException ex) {
-            throw new ServerSideException("Could not save file: " + ex.getMessage());
-        }
+        File file = getAbsolutePathOfFile(filename).toFile();
+        Long metadataId = metadataService.create(file, FileMetadata.Status.NOT_READY_FOR_USE).getId();
+
+        Runnable task = () -> {
+            try (InputStream in = new URL(url).openStream()) {
+                Files.copy(in, file.toPath());
+                FileMetadata updatedMetadata = metadataService
+                        .buildMetadataFromFile(file, FileMetadata.Status.READY_FOR_USE);
+                updatedMetadata.setId(metadataId);
+                metadataService.update(updatedMetadata);
+            } catch (IOException ex) {
+                throw new ServerSideException("Could not save file: " + ex.getMessage(), ex);
+            }
+        };
+
+        Thread fileSaveThread = new Thread(task);
+        fileSaveThread.start();
     }
 
     public Resource load(Long id) {
         FileMetadata metadata = metadataService.findById(id);
-        return new FileSystemResource(Paths.get(rootDirectory).resolve(metadata.getDirectory()));
+        return new FileSystemResource(getAbsolutePathOfFile(metadata));
     }
 
     public void delete(Long id) {
         FileMetadata metadata = metadataService.findById(id);
-        try {
-            Files.deleteIfExists(Paths.get(rootDirectory).resolve(metadata.getDirectory()));
-            metadataService.delete(id);
-        } catch (IOException ex) {
-            throw new ServerSideException("Could not delete file: " + ex.getMessage());
+        checkFileStatus(metadata);
+        metadata.setStatus(FileMetadata.Status.NOT_READY_FOR_USE);
+        metadataService.update(metadata);
+
+        Runnable task = () -> {
+            try {
+                Files.deleteIfExists(getAbsolutePathOfFile(metadata));
+                metadataService.delete(id);
+            } catch (IOException ex) {
+                throw new ServerSideException("Could not delete file: " + ex.getMessage(), ex);
+            }
+        };
+
+        Thread fileSaveThread = new Thread(task);
+        fileSaveThread.start();
+    }
+
+    public void copy(Long id, String filePathSuffix) {
+        checkPathSecurity(filePathSuffix);
+        FileMetadata metadata = metadataService.findById(id);
+        checkFileStatus(metadata);
+        metadataService.checkAlreadyExists(filePathSuffix);
+
+        File file = getAbsolutePathOfFile(filePathSuffix).toFile();
+        Long copyId = metadataService.create(file, FileMetadata.Status.NOT_READY_FOR_USE).getId();
+
+        Runnable task = () -> {
+            try {
+                Files.copy(getAbsolutePathOfFile(metadata), file.toPath());
+                FileMetadata copyMetadata  = metadataService
+                        .buildMetadataFromFile(file, FileMetadata.Status.READY_FOR_USE);
+                copyMetadata.setId(copyId);
+                metadataService.update(copyMetadata);
+            } catch (IOException ex) {
+                throw new ServerSideException("Could not save file: " + ex.getMessage(), ex);
+            }
+        };
+
+        Thread fileCopyThread = new Thread(task);
+        fileCopyThread.start();
+    }
+
+    public void move(Long id, String filePathSuffix) {
+        checkPathSecurity(filePathSuffix);
+        FileMetadata metadata = metadataService.findById(id);
+        checkFileStatus(metadata);
+        metadataService.checkAlreadyExists(filePathSuffix);
+
+        File file = getAbsolutePathOfFile(filePathSuffix).toFile();
+        metadata.setStatus(FileMetadata.Status.NOT_READY_FOR_USE);
+        metadataService.update(metadata);
+
+        Runnable task = () -> {
+            try {
+                Files.move(getAbsolutePathOfFile(metadata), file.toPath());
+                FileMetadata updatedMetadata = metadataService
+                        .buildMetadataFromFile(file, FileMetadata.Status.READY_FOR_USE);
+                updatedMetadata.setId(id);
+                metadataService.update(updatedMetadata);
+            } catch (IOException ex) {
+                throw new ServerSideException("Could not save file: " + ex.getMessage(), ex);
+            }
+        };
+
+        Thread fileMoveThread = new Thread(task);
+        fileMoveThread.start();
+    }
+
+    private Path getAbsolutePathOfFile(FileMetadata fileMetadata) {
+        return Paths.get(rootDirectory)
+                .resolve(fileMetadata.getDirectory()).resolve(fileMetadata.getOriginalFilename());
+    }
+
+    private Path getAbsolutePathOfFile(String filePathSuffix) {
+        return Paths.get(rootDirectory)
+                .resolve(filePathSuffix);
+    }
+
+    private void checkPathSecurity(String path) {
+        if (path.contains("..")) {
+            throw new ValidationException("'filePathSuffix' cannot contain '..'");
         }
     }
 
-    public void copy(Long id, String toDirectory) {
-        FileMetadata metadata = metadataService.findById(id);
-        metadataService.checkAlreadyExists(toDirectory);
-
-        File file = new File(String.valueOf(Paths.get(rootDirectory).resolve(toDirectory)));
-        try {
-            Files.copy(Paths.get(rootDirectory).resolve(metadata.getDirectory()),
-                    file.toPath());
-            metadataService.create(file);
-        } catch (IOException ex) {
-            throw new ServerSideException("Could not save file: " + ex.getMessage());
-        }
-    }
-
-    public void move(Long id, String toDirectory) {
-        FileMetadata metadata = metadataService.findById(id);
-        metadataService.checkAlreadyExists(toDirectory);
-
-        File file = new File(String.valueOf(Paths.get(rootDirectory).resolve(toDirectory)));
-        try {
-            Files.move(Paths.get(rootDirectory).resolve(metadata.getDirectory()),
-                    file.toPath());
-            FileMetadata updatedMetadata = metadataService.getMetadataFromFile(file);
-            updatedMetadata.setId(metadata.getId());
-            metadataService.update(updatedMetadata);
-        } catch (IOException ex) {
-            throw new ServerSideException("Could not save file: " + ex.getMessage());
+    private void checkFileStatus(FileMetadata metadata) {
+        if (metadata.getStatus() == FileMetadata.Status.NOT_READY_FOR_USE) {
+            throw new ValidationException("The file is not ready for use");
         }
     }
 }

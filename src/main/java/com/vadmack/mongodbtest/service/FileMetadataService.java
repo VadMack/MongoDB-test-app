@@ -2,6 +2,7 @@ package com.vadmack.mongodbtest.service;
 
 import com.vadmack.mongodbtest.entity.FileMetadata;
 import com.vadmack.mongodbtest.exception.NotFoundException;
+import com.vadmack.mongodbtest.exception.ServerSideException;
 import com.vadmack.mongodbtest.exception.ValidationException;
 import com.vadmack.mongodbtest.repository.FileMetadataRepository;
 import com.vadmack.mongodbtest.util.PageableService;
@@ -48,11 +49,11 @@ public class FileMetadataService {
                 sortBy = new String[1];
                 sortBy[0] = "id:0";
             }
-            return repository.findAllByDirectoryRegex(
+            return repository.findAllByOriginalFilenameRegex(
                     filenamePart,
                     PageRequest.of(pageNumber, pageSize, sort));
         } else {
-            return repository.findAllByDirectoryRegex(filenamePart, sort);
+            return repository.findAllByOriginalFilenameRegex(filenamePart, sort);
         }
     }
 
@@ -60,27 +61,48 @@ public class FileMetadataService {
         return getById(id);
     }
 
-    public void checkAlreadyExists(String directory) {
-        if (repository.findByDirectory(directory).isPresent()) {
-            throw new ValidationException("File '" + directory + "' already exists");
+    public void checkAlreadyExists(String directory, String originalFileName) {
+        if (repository.findByDirectoryAndOriginalFilename(directory, originalFileName).isPresent()) {
+            throw new ValidationException("File '" + directory + "/" + originalFileName +"' already exists");
         }
     }
 
-    public void create(File file) throws IOException {
-        FileMetadata metadata = getMetadataFromFile(file);
-        metadata.setId(sequenceGeneratorService.generateSequence(FileMetadata.SEQUENCE_NAME));
-        repository.save(metadata);
+    public void checkAlreadyExists(String filePathSuffix) {
+        Path suffix = Paths.get(filePathSuffix);
+        Path root = Paths.get(rootDirectory);
+        Path base = Paths.get(rootDirectory).resolve(suffix).getParent();
+        Path relativePath = root.relativize(base);
+
+        if (repository.findByDirectoryAndOriginalFilename(relativePath.toString(),
+                suffix.getFileName().toString())
+                .isPresent()) {
+            throw new ValidationException("File '" + filePathSuffix + "' already exists");
+        }
     }
 
-    public FileMetadata getMetadataFromFile(File file) throws IOException{
+    public FileMetadata create(File file, FileMetadata.Status status) {
+        FileMetadata metadata = buildMetadataFromFile(file, status);
+        metadata.setId(sequenceGeneratorService.generateSequence(FileMetadata.SEQUENCE_NAME));
+        return repository.save(metadata);
+    }
+
+    public FileMetadata buildMetadataFromFile(File file, FileMetadata.Status status) {
         FileMetadata metadata = new FileMetadata();
         metadata.setOriginalFilename(file.getName());
         metadata.setFilename(file.getName());
-        metadata.setMimeType(Files.probeContentType(file.toPath()));
-        metadata.setSize(Files.size(file.toPath()));
+        metadata.setStatus(status);
+
+        if (!(status == FileMetadata.Status.NOT_READY_FOR_USE)) {
+            try {
+                metadata.setMimeType(Files.probeContentType(file.toPath()));
+                metadata.setSize(Files.size(file.toPath()));
+            } catch (IOException ex) {
+                throw new ServerSideException("Could not save file: " + ex.getMessage(), ex);
+            }
+        }
 
         Path root = Paths.get(rootDirectory);
-        Path base = Paths.get(file.getPath());
+        Path base = Paths.get(file.getParent());
         Path relativePath = root.relativize(base);
         metadata.setDirectory(relativePath.toString());
         return metadata;

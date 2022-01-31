@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
@@ -24,7 +23,13 @@ public class FileMetadata {
     private String mimeType;
     private String filename;
 
-    // relative path from root directory including filename
-    @Indexed(unique = true)
+    // relative path from root directory
     private String directory;
+
+    private Status status;
+
+    public enum Status {
+        NOT_READY_FOR_USE,
+        READY_FOR_USE
+    }
 }
