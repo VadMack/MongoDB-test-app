@@ -1,5 +1,6 @@
 package com.vadmack.mongodbtest.controller;
 
+import com.vadmack.mongodbtest.dto.FileMetadataDto;
 import com.vadmack.mongodbtest.entity.FileMetadata;
 import com.vadmack.mongodbtest.service.FileMetadataService;
 import com.vadmack.mongodbtest.service.FileService;
@@ -22,7 +23,7 @@ public class FileController {
 
     @GetMapping()
     @ResponseBody
-    public ResponseEntity<List<FileMetadata>> getList(
+    public ResponseEntity<List<FileMetadataDto>> getList(
             @RequestParam(value = "filterFileame", required = false) String filename,
             @RequestParam(required = false) Integer pageNumber,
             @RequestParam(required = false) Integer pageSize,

@@ -5,11 +5,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@CompoundIndex(name = "path", def = "{'originalFilename' : 1, 'directory': 1}", unique = true)
 @Document("fileMetadata")
 public class FileMetadata {
 
@@ -26,10 +28,6 @@ public class FileMetadata {
     // relative path from root directory
     private String directory;
 
-    private Status status;
+    private FileStatus status;
 
-    public enum Status {
-        NOT_READY_FOR_USE,
-        READY_FOR_USE
-    }
 }

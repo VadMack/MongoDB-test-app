@@ -1,6 +1,8 @@
 package com.vadmack.mongodbtest.service;
 
+import com.vadmack.mongodbtest.dto.FileMetadataDto;
 import com.vadmack.mongodbtest.entity.FileMetadata;
+import com.vadmack.mongodbtest.entity.FileStatus;
 import com.vadmack.mongodbtest.exception.NotFoundException;
 import com.vadmack.mongodbtest.exception.ServerSideException;
 import com.vadmack.mongodbtest.exception.ValidationException;
@@ -10,6 +12,7 @@ import com.vadmack.mongodbtest.util.SequenceGeneratorService;
 import com.vadmack.mongodbtest.util.SortService;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -21,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +38,9 @@ public class FileMetadataService {
     private final SortService sortService;
     private final SequenceGeneratorService sequenceGeneratorService;
 
-    public List<FileMetadata> findList(
+    private final ModelMapper modelMapper = new ModelMapper();
+
+    public List<FileMetadataDto> findList(
             @Nullable String filenamePart,
             @Nullable Integer pageNumber,
             @Nullable Integer pageSize,
@@ -51,9 +57,13 @@ public class FileMetadataService {
             }
             return repository.findAllByOriginalFilenameRegex(
                     filenamePart,
-                    PageRequest.of(pageNumber, pageSize, sort));
+                    PageRequest.of(pageNumber, pageSize, sort))
+                    .stream().map(this::entityToDto)
+                    .collect(Collectors.toList());
         } else {
-            return repository.findAllByOriginalFilenameRegex(filenamePart, sort);
+            return repository.findAllByOriginalFilenameRegex(filenamePart, sort)
+                    .stream().map(this::entityToDto)
+                    .collect(Collectors.toList());
         }
     }
 
@@ -80,19 +90,19 @@ public class FileMetadataService {
         }
     }
 
-    public FileMetadata create(File file, FileMetadata.Status status) {
+    public FileMetadata create(File file, FileStatus status) {
         FileMetadata metadata = buildMetadataFromFile(file, status);
         metadata.setId(sequenceGeneratorService.generateSequence(FileMetadata.SEQUENCE_NAME));
         return repository.save(metadata);
     }
 
-    public FileMetadata buildMetadataFromFile(File file, FileMetadata.Status status) {
+    public FileMetadata buildMetadataFromFile(File file, FileStatus status) {
         FileMetadata metadata = new FileMetadata();
         metadata.setOriginalFilename(file.getName());
         metadata.setFilename(file.getName());
         metadata.setStatus(status);
 
-        if (!(status == FileMetadata.Status.NOT_READY_FOR_USE)) {
+        if (!(status == FileStatus.NOT_READY_FOR_USE)) {
             try {
                 metadata.setMimeType(Files.probeContentType(file.toPath()));
                 metadata.setSize(Files.size(file.toPath()));
@@ -120,5 +130,9 @@ public class FileMetadataService {
     private FileMetadata getById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new NotFoundException(String.format("File with id=%d not found", id)));
+    }
+
+    private FileMetadataDto entityToDto(FileMetadata metadata) {
+        return modelMapper.map(metadata, FileMetadataDto.class);
     }
 }
