@@ -1,6 +1,7 @@
 package com.vadmack.mongodbtest.exception.handler;
 
 import com.vadmack.mongodbtest.exception.NotFoundException;
+import com.vadmack.mongodbtest.exception.ServerSideException;
 import com.vadmack.mongodbtest.exception.ValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,11 @@ public class CustomExceptionHandler {
     @ExceptionHandler({BadCredentialsException.class})
     public ResponseEntity<String> handleBadCredentialsException(BadCredentialsException exception) {
         return new ResponseEntity<>(exception.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler({ServerSideException.class})
+    public ResponseEntity<String> handleServerSideException(ServerSideException exception) {
+        return new ResponseEntity<>(exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class})
